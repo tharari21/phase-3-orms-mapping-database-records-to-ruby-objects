@@ -48,5 +48,29 @@ class Song
     song = Song.new(name: name, album: album)
     song.save
   end
+  def self.new_from_db(row)
+    self.new(id: row[0], name: row[1], album: row[2])
+  end
+  def self.all
+    # This will return an array of rows from the database that matches our query. 
+    # Now, all we have to do is iterate over each row and use the self.map method 
+    # to create a new Ruby object for each row:
+    DB[:conn].execute('SELECT * FROM songs').map do |row|
+      self.new_from_db(row)
+    end
+  end
+
+  def self.find_by_name(name)
+    sql = <<-SQL
+      SELECT *
+      FROM songs
+      WHERE name = ?
+      LIMIT 1
+    SQL
+    # Don't be freaked out by that #first method chained to the end of the DB[:conn].execute(sql, name).map block. The return value of the #map method is an array, and we're simply grabbing the #first element from the returned array. Chaining is cool!
+    DB[:conn].execute(sql, name).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
 
 end
